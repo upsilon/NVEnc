@@ -705,16 +705,17 @@ typedef struct AVDemuxStream {
     int                       nIndex;                 //音声・字幕のストリームID (libavのストリームID)
     int                       nTrackId;               //音声のトラックID (QSVEncC独自, 1,2,3,...)、字幕は0
     int                       nSubStreamId;           //通常は0、音声のチャンネルを分離する際に複製として作成
-    AVStream                 *pStream;                //音声・字幕のストリーム
+    AVStream                 *pStream;                //音声・字幕のストリーム (caption2assから字幕生成の場合、nullptrとなる)
     int                       nLastVidIndex;          //音声の直前の相当する動画の位置
     int64_t                   nExtractErrExcess;      //音声抽出のあまり (音声が多くなっていれば正、足りなくなっていれば負)
     AVPacket                  pktSample;              //サンプル用の音声・字幕データ
     int                       nDelayOfStream;         //音声側の遅延 (pkt_timebase基準)
     uint64_t                  pnStreamChannelSelect[MAX_SPLIT_CHANNELS]; //入力音声の使用するチャンネル
     uint64_t                  pnStreamChannelOut[MAX_SPLIT_CHANNELS];    //出力音声のチャンネル
-    void                     *extraData;              //pStream = nullptrの場合のヘッダー情報
-    int                       extraDataSize;          //extraDataのサイズ
-    AVRational                timebase;               //streamのtimebase
+    AVRational                timebase;               //streamのtimebase [pStream = nullptrの場合でも使えるように]
+    void                     *subtitleHeader;         //pStream = nullptrの場合 caption2assのヘッダー情報 (srt形式でもass用のヘッダーが入っている)
+    int                       subtitleHeaderSize;     //pStream = nullptrの場合 caption2assのヘッダー情報のサイズ
+    C2AFormat                 caption2ass;            //pStream = nullptrの場合 caption2assのformat
 } AVDemuxStream;
 
 typedef struct AVDemuxThread {
@@ -761,9 +762,12 @@ public:
         m_cap2ass.close();
         m_pLog.reset();
     }
-    RGY_ERR init(std::shared_ptr<RGYLog> pLog) {
+    RGY_ERR init(std::shared_ptr<RGYLog> pLog, C2AFormat format) {
         m_pLog = pLog;
-        return m_cap2ass.init(pLog);
+        return m_cap2ass.init(pLog, format);
+    }
+    C2AFormat format() const {
+        return m_cap2ass.format();
     }
     AVCAPTION_STATE state() const {
         return m_state;
@@ -785,25 +789,32 @@ public:
         m_cap2ass.setOutputResolution(w, h, sar_x, sar_y);
         m_resolutionDetermined = true;
     }
+    void printParam(int log_level) {
+        m_cap2ass.printParam(log_level);
+    }
     void setVidFirstKeyPts(int64_t pts) {
         m_cap2ass.setVidFirstKeyPts(pts);
     }
     AVDemuxStream stream() const {
-        auto header = m_cap2ass.assHeader();
+        std::string header = m_cap2ass.assHeader();
         AVDemuxStream stream;
         memset(&stream, 0, sizeof(AVDemuxStream));
         stream.nIndex = m_index;
         stream.nTrackId = m_trackId;
-        stream.extraData = av_strdup(header.c_str());
-        stream.extraDataSize = (int)header.length();
+        stream.subtitleHeader = av_strdup(header.c_str());
+        stream.subtitleHeaderSize = (int)header.length();
         stream.timebase = av_make_q(1, 90000);
+        stream.caption2ass = m_cap2ass.format();
         return stream;
     }
     RGY_ERR proc(uint8_t *buf, int buf_size, decltype(AVDemuxer::qStreamPktL1)& qStreamPkt) {
+        auto ret = RGY_ERR_NONE;
+        if (buf_size == 0) {
+            return ret;
+        }
         if (m_state == AVCAPTION_UNKNOWN) {
             m_state = m_cap2ass.isTS(buf, buf_size) ? AVCAPTION_IS_TS : AVCAPTION_NOT_TS;
         }
-        auto ret = RGY_ERR_NONE;
         if (m_state == AVCAPTION_IS_TS) {
             if (!m_resolutionDetermined) {
                 //出力解像度が決まるまでデータを蓄積
@@ -877,7 +888,7 @@ typedef struct AvcodecReaderPrm {
     PerfQueueInfo *pQueueInfo;               //キューの情報を格納する構造体
     DeviceCodecCsp *pHWDecCodecCsp;          //HWデコーダのサポートするコーデックと色空間
     bool           bVideoDetectPulldown;     //pulldownの検出を試みるかどうか
-    bool           caption2ass;              //caption2assの処理の有効化
+    C2AFormat      caption2ass;              //caption2assの処理の有効化
 } AvcodecReaderPrm;
 
 class RGYInputAvcodec : public RGYInput

@@ -35,6 +35,7 @@
 #include <shellapi.h>
 #include "rgy_version.h"
 #include "rgy_perf_monitor.h"
+#include "rgy_caption.h"
 #include "NVEncParam.h"
 #include "NVEncCmd.h"
 #include "NVEncFilterAfs.h"
@@ -833,11 +834,22 @@ int parse_one_option(const TCHAR *option_name, const TCHAR* strInput[], int& i, 
         return 0;
     }
     if (0 == _tcscmp(option_name, _T("caption2ass"))) {
-        pParams->caption2ass = true;
+        if (i+1 < nArgNum && strInput[i+1][0] != _T('-')) {
+            i++;
+            C2AFormat format = FORMAT_INVALID;
+            if (PARSE_ERROR_FLAG != (format = (C2AFormat)get_value_from_chr(list_caption2ass, strInput[i]))) {
+                pParams->caption2ass = format;
+            } else {
+                SET_ERR(strInput[0], _T("Unknown value"), option_name, strInput[i]);
+                return 1;
+            }
+        } else {
+            pParams->caption2ass = FORMAT_SRT;
+        }
         return 0;
     }
     if (0 == _tcscmp(option_name, _T("no-caption2ass"))) {
-        pParams->caption2ass = false;
+        pParams->caption2ass = FORMAT_INVALID;
         return 0;
     }
     if (0 == _tcscmp(option_name, _T("avsync"))) {
@@ -3218,7 +3230,7 @@ tstring gen_cmd(const InEncodeVideoParam *pParams, const NV_ENC_CODEC_CONFIG cod
         cmd << _T(" --sub-copy ") << tmp.str().substr(1);
     }
     tmp.str(tstring());
-    OPT_BOOL(_T("--caption2ass"), _T("--no-caption2ass"), caption2ass);
+    OPT_LST(_T("--caption2ass"), caption2ass, list_caption2ass);
     OPT_STR_PATH(_T("--chapter"), sChapterFile);
     OPT_BOOL(_T("--chapter-copy"), _T(""), bCopyChapter);
     //OPT_BOOL(_T("--chapter-no-trim"), _T(""), bChapterNoTrim);

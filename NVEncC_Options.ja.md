@@ -454,6 +454,11 @@ libavが読み込み時に解析するファイルの時間を秒で指定。デ
 ### --trim &lt;int&gt;:&lt;int&gt;[,&lt;int&gt;:&lt;int&gt;][,&lt;int&gt;:&lt;int&gt;]...
 指定した範囲のフレームのみをエンコードする。
 
+```
+例1: --trim 0:1000,2000:3000    (0～1000フレーム目, 2000～3000フレーム目をエンコード)
+例2: --trim 2000:0              (2000～最終フレームまでをエンコード)
+```
+
 ### --seek [&lt;int&gt;:][&lt;int&gt;:]&lt;int&gt;[.&lt;int&gt;]
 書式は、hh:mm:ss.ms。"hh"や"mm"は省略可。
 高速だが不正確なシークをしてからエンコードを開始する。正確な範囲指定を行いたい場合は[--trim](#--trim-intintintintintint)で行う。
@@ -669,8 +674,14 @@ apple形式 (should be in utf-8)
 --sub-copy 1,2
 ```
 
-### --caption2ass
-caption2assによる字幕のass化処理を有効にする。Caption.dllが必要。
+### --caption2ass [&lt;string&gt;]
+caption2assによる字幕抽出処理を行い、動画にmuxして出力する。別途 "Caption.dll" が必要。
+
+mp4にmuxする際は、必ずsrt形式を選択してください。内部でさらにmov_textに変換してmuxしますが、ass形式を選択するとmp4へのmuxがうまく動作しません。
+
+**出力フォーマット**
+- srt (デフォルト)
+- ass
 
 ### -m, --mux-option &lt;string1&gt;:&lt;string2&gt;
 mux時にオプションパラメータを渡す。&lt;string1&gt;にオプション名、&lt;string2&gt;にオプションの値を指定する。

@@ -445,6 +445,11 @@ If audio / subtitle tracks etc. are not detected properly, try increasing this v
 ### --trim &lt;int&gt;:&lt;int&gt;[,&lt;int&gt;:&lt;int&gt;][,&lt;int&gt;:&lt;int&gt;]...
 Encode only frames in the specified range.
 
+```
+Example 1: --trim 0:1000,2000:3000    (encode from frame #0 to #1000 and from frame #2000 to #3000)
+Example 2: --trim 2000:0              (encode from frame #2000 to the end)
+```
+
 ### --seek [&lt;int&gt;:][&lt;int&gt;:]&lt;int&gt;[.&lt;int&gt;]
 The format is hh:mm:ss.ms. "hh" or "mm" could be omitted. The transcode will start from the time specified.
 
@@ -666,8 +671,12 @@ Example: Copy subtitle track #1 and #2
 --sub-copy 1,2
 ```
 
-### --caption2ass
-Enable internal caption2ass process. Requires Caption.dll.
+### --caption2ass [&lt;string&gt;]
+Enable internal caption2ass process. This feature requires Caption.dll.  
+
+**Note:** Pelase always select srt format when muxing to mp4.  
+
+supported formats ... srt (default), ass
 
 ### -m, --mux-option &lt;string1&gt;:&lt;string2&gt;
 Pass optional parameters to muxer. Specify the option name in &lt;string1&gt, and the option value in &lt;string2&gt;.

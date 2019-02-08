@@ -31,15 +31,17 @@
 #include "rgy_caption.h"
 #include "packet_types.h"
 
+#if ENABLE_AVSW_READER
+
 #define TIMESTAMP_INVALID_VALUE     (-1LL)
 #define WRAP_AROUND_VALUE           (1LL << 33)
 #define WRAP_AROUND_CHECK_VALUE     ((1LL << 32) - 1)
 #define PCR_MAXIMUM_INTERVAL        (100 * 90)
 
-static const char *DEFAULT_FONT_NAME = "MS UI Gothic";
-static const char *DEFAULT_STYLE      = "&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,15,0,1,2,2,1,10,10,10,0";
-static const char *DEFAULT_BOX_STYLE  = "&HFFFFFFFF,&H000000FF,&H00FFFFFF,&H00FFFFFF,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,0";
-static const char *DEFAULT_RUBI_STYLE = "&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,1,10,10,10,0";
+static const TCHAR *DEFAULT_FONT_NAME = _T("MS UI Gothic");
+static const TCHAR *DEFAULT_STYLE      = _T("&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,15,0,1,2,2,1,10,10,10,0");
+static const TCHAR *DEFAULT_BOX_STYLE  = _T("&HFFFFFFFF,&H000000FF,&H00FFFFFF,&H00FFFFFF,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,0");
+static const TCHAR *DEFAULT_RUBI_STYLE = _T("&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,1,10,10,10,0");
 
 ass_setting_t::ass_setting_t() :
     SWF0offset(0),
@@ -52,43 +54,45 @@ ass_setting_t::ass_setting_t() :
     Comment3(""),
     PlayResX(1920),
     PlayResY(1080),
-    DefaultFontname(DEFAULT_FONT_NAME),
+    DefaultFontname(tchar_to_string(DEFAULT_FONT_NAME)),
     DefaultFontsize(90),
-    DefaultStyle(DEFAULT_STYLE),
-    BoxFontname(DEFAULT_FONT_NAME),
+    DefaultStyle(tchar_to_string(DEFAULT_STYLE)),
+    BoxFontname(tchar_to_string(DEFAULT_FONT_NAME)),
     BoxFontsize(90),
-    BoxStyle(DEFAULT_BOX_STYLE),
-    RubiFontname(DEFAULT_FONT_NAME),
+    BoxStyle(tchar_to_string(DEFAULT_BOX_STYLE)),
+    RubiFontname(tchar_to_string(DEFAULT_FONT_NAME)),
     RubiFontsize(50),
-    RubiStyle(DEFAULT_RUBI_STYLE) {
+    RubiStyle(tchar_to_string(DEFAULT_RUBI_STYLE)) {
 
 }
-void ass_setting_t::set(const std::string& inifile, int width, int height) {
-    SWF0offset = GetPrivateProfileIntA("SWFModeOffset", "SWF0offset", 0, inifile.c_str());
-    SWF5offset = GetPrivateProfileIntA("SWFModeOffset", "SWF5offset", 0, inifile.c_str());
-    SWF7offset = GetPrivateProfileIntA("SWFModeOffset", "SWF7offset", 0, inifile.c_str());
-    SWF9offset = GetPrivateProfileIntA("SWFModeOffset", "SWF9offset", 0, inifile.c_str());
-    SWF11offset = GetPrivateProfileIntA("SWFModeOffset", "SWF11offset", 0, inifile.c_str());
+void ass_setting_t::set(const tstring& inifile, int width, int height) {
+#if defined(_WIN32) || defined(_WIN64)
+    SWF0offset = GetPrivateProfileInt(_T("SWFModeOffset"), _T("SWF0offset"), 0, inifile.c_str());
+    SWF5offset = GetPrivateProfileInt(_T("SWFModeOffset"), _T("SWF5offset"), 0, inifile.c_str());
+    SWF7offset = GetPrivateProfileInt(_T("SWFModeOffset"), _T("SWF7offset"), 0, inifile.c_str());
+    SWF9offset = GetPrivateProfileInt(_T("SWFModeOffset"), _T("SWF9offset"), 0, inifile.c_str());
+    SWF11offset = GetPrivateProfileInt(_T("SWFModeOffset"), _T("SWF11offset"), 0, inifile.c_str());
 
-    static const char *KEY = (double)width  / (double)height > 1.5 ? "Default" : "Default43";
-    char buffer[1024];
-    GetPrivateProfileStringA(KEY, "Comment1", "", buffer, sizeof(buffer), inifile.c_str()); Comment1 = buffer;
-    GetPrivateProfileStringA(KEY, "Comment2", "", buffer, sizeof(buffer), inifile.c_str()); Comment2 = buffer;
-    GetPrivateProfileStringA(KEY, "Comment3", "", buffer, sizeof(buffer), inifile.c_str()); Comment3 = buffer;
-    PlayResX = GetPrivateProfileIntA("SWFModeOffset", "PlayResX", 0, inifile.c_str());
-    PlayResY = GetPrivateProfileIntA("SWFModeOffset", "PlayResY", 0, inifile.c_str());
+    static const TCHAR *KEY = (double)width  / (double)height > 1.5 ? _T("Default") : _T("Default43");
+    TCHAR buffer[1024];
+    GetPrivateProfileString(KEY, _T("Comment1"), _T(""), buffer, _countof(buffer), inifile.c_str()); Comment1 = tchar_to_string(buffer, CP_UTF8);
+    GetPrivateProfileString(KEY, _T("Comment2"), _T(""), buffer, _countof(buffer), inifile.c_str()); Comment2 = tchar_to_string(buffer, CP_UTF8);
+    GetPrivateProfileString(KEY, _T("Comment3"), _T(""), buffer, _countof(buffer), inifile.c_str()); Comment3 = tchar_to_string(buffer, CP_UTF8);
+    PlayResX = GetPrivateProfileInt(KEY, _T("PlayResX"), 0, inifile.c_str());
+    PlayResY = GetPrivateProfileInt(KEY, _T("PlayResY"), 0, inifile.c_str());
 
-    GetPrivateProfileStringA(KEY, "DefaultFontname", DEFAULT_FONT_NAME, buffer, sizeof(buffer), inifile.c_str()); DefaultFontname = buffer;
-    DefaultFontsize = GetPrivateProfileIntA("SWFModeOffset", "DefaultFontsize", 0, inifile.c_str());
-    GetPrivateProfileStringA(KEY, "DefaultStyle", DEFAULT_STYLE, buffer, sizeof(buffer), inifile.c_str()); DefaultStyle = buffer;
+    GetPrivateProfileString(KEY, _T("DefaultFontname"), DEFAULT_FONT_NAME, buffer, _countof(buffer), inifile.c_str()); DefaultFontname = tchar_to_string(buffer, CP_UTF8);
+    DefaultFontsize = GetPrivateProfileInt(KEY, _T("DefaultFontsize"), 0, inifile.c_str());
+    GetPrivateProfileString(KEY, _T("DefaultStyle"), DEFAULT_STYLE, buffer, _countof(buffer), inifile.c_str()); DefaultStyle = tchar_to_string(buffer, CP_UTF8);
 
-    GetPrivateProfileStringA(KEY, "BoxFontname", DEFAULT_FONT_NAME, buffer, sizeof(buffer), inifile.c_str()); BoxFontname = buffer;
-    BoxFontsize = GetPrivateProfileIntA("SWFModeOffset", "BoxFontsize", 0, inifile.c_str());
-    GetPrivateProfileStringA(KEY, "BoxStyle", DEFAULT_BOX_STYLE, buffer, sizeof(buffer), inifile.c_str()); BoxStyle = buffer;
+    GetPrivateProfileString(KEY, _T("BoxFontname"), DEFAULT_FONT_NAME, buffer, _countof(buffer), inifile.c_str()); BoxFontname = tchar_to_string(buffer, CP_UTF8);
+    BoxFontsize = GetPrivateProfileInt(KEY, _T("BoxFontsize"), 0, inifile.c_str());
+    GetPrivateProfileString(KEY, _T("BoxStyle"), DEFAULT_BOX_STYLE, buffer, _countof(buffer), inifile.c_str()); BoxStyle = tchar_to_string(buffer, CP_UTF8);
 
-    GetPrivateProfileStringA(KEY, "RubiFontname", DEFAULT_FONT_NAME, buffer, sizeof(buffer), inifile.c_str()); RubiFontname = buffer;
-    RubiFontsize = GetPrivateProfileIntA("SWFModeOffset", "RubiFontsize", 0, inifile.c_str());
-    GetPrivateProfileStringA(KEY, "RubiStyle", DEFAULT_RUBI_STYLE, buffer, sizeof(buffer), inifile.c_str()); RubiStyle = buffer;
+    GetPrivateProfileString(KEY, _T("RubiFontname"), DEFAULT_FONT_NAME, buffer, _countof(buffer), inifile.c_str()); RubiFontname = tchar_to_string(buffer, CP_UTF8);
+    RubiFontsize = GetPrivateProfileInt(KEY, _T("RubiFontsize"), 0, inifile.c_str());
+    GetPrivateProfileString(KEY, _T("RubiStyle"), DEFAULT_RUBI_STYLE, buffer, _countof(buffer), inifile.c_str()); RubiStyle = tchar_to_string(buffer, CP_UTF8);
+#endif //#if defined(_WIN32) || defined(_WIN64)
 }
 
 static const unsigned char utf8_bom[3] = { 0xEF, 0xBB, 0xBF };
@@ -483,22 +487,24 @@ PidInfo::PidInfo() :
     PCRPid(0) {
 }
 
+SrtOut::SrtOut() :
+    ornament(true),
+    index(0) {
+}
+
 Caption2AssPrm::Caption2AssPrm() :
     DelayTime(0),
     keepInterval(true),
     HLCmode(HLC_kigou),
-    srtornament(false),
     norubi(false),
     LangType(1),
-    detectLength(0),
     ass_type(),
-    FileName(),
-    TargetFileName(),
-    readBufferSize(0) {
+    FileName() {
 }
 
 Caption2Ass::Caption2Ass() :
     m_dll(),
+    m_format(FORMAT_INVALID),
     m_streamSync(false),
     m_stream(),
     m_timestamp(),
@@ -509,7 +515,8 @@ Caption2Ass::Caption2Ass() :
     m_capList(),
     m_pLog(),
     m_vidFirstKeyPts(0),
-    m_sidebarSize(0) {
+    m_sidebarSize(0),
+    m_srt() {
     m_stream.init();
 }
 Caption2Ass::~Caption2Ass() {
@@ -520,7 +527,7 @@ void Caption2Ass::close() {
     m_pLog.reset();
 }
 
-RGY_ERR Caption2Ass::init(std::shared_ptr<RGYLog> pLog) {
+RGY_ERR Caption2Ass::init(std::shared_ptr<RGYLog> pLog, C2AFormat format) {
     m_pLog = pLog;
     m_dll.reset(new CaptionDLL());
     auto ret = m_dll->load();
@@ -536,7 +543,11 @@ RGY_ERR Caption2Ass::init(std::shared_ptr<RGYLog> pLog) {
         AddMessage(RGY_LOG_ERROR, _T("Failed to init Caption.dll.\n"));
         return ret;
     }
-
+    m_format = format;
+    if (m_format != FORMAT_ASS && m_format != FORMAT_SRT) {
+        AddMessage(RGY_LOG_ERROR, _T("Invalid format specified.\n"));
+        return RGY_ERR_INVALID_DATA_TYPE;
+    }
     return RGY_ERR_NONE;
 }
 
@@ -632,6 +643,16 @@ bool Caption2Ass::isTS(const uint8_t *data, const int64_t data_size) const {
 void Caption2Ass::setOutputResolution(int w, int h, int sar_x, int sar_y) {
     m_ass.PlayResX = w;
     m_ass.PlayResY = h;
+#if defined(_WIN32) || defined(_WIN64)
+    TCHAR buf[1024] = { 0 };
+    GetModuleFileName(NULL, buf, _countof(buf));
+    auto exeDir = PathRemoveFileSpecFixed(buf);
+    auto list = get_file_list(_T("Caption2Ass*.ini"), exeDir.second);
+    if (list.size() > 0) {
+        AddMessage(RGY_LOG_INFO, _T("load ass settings from \"%s\""), list[0].c_str());
+        m_ass.set(list[0], w, h);
+    }
+#endif
     if (sar_x > 0 && sar_y > 0) {
         if (sar_x > sar_y) {
             m_ass.PlayResX = m_ass.PlayResX * sar_x / sar_y;
@@ -641,6 +662,21 @@ void Caption2Ass::setOutputResolution(int w, int h, int sar_x, int sar_y) {
     }
     m_sidebarSize = 0;
     AddMessage(RGY_LOG_DEBUG, _T("PlayResX: %d, PlayResY: %d, m_sidebarSize: %d.\n"), m_ass.PlayResX, m_ass.PlayResY, m_sidebarSize);
+}
+
+void Caption2Ass::printParam(int log_level) {
+    if (!m_pLog || log_level < m_pLog->getLogLevel()) {
+        return;
+    }
+    AddMessage(log_level, _T("caption2ass:   %s\n"), get_chr_from_value(list_caption2ass, m_format));
+    AddMessage(log_level, _T(" DelayTime:    %d\n"), m_prm.DelayTime);
+    AddMessage(log_level, _T(" keepInterval: %s\n"), m_prm.keepInterval ? _T("yes") : _T("no"));
+    AddMessage(log_level, _T(" HLCmode:      %d\n"), get_chr_from_value(list_caption2ass_hlc, m_prm.HLCmode));
+    AddMessage(log_level, _T(" norubi:       %s\n"), m_prm.norubi ? _T("yes") : _T("no"));
+    AddMessage(log_level, _T(" LangType:     %d\n"), m_prm.LangType);
+    AddMessage(log_level, _T(" ass_type:     %s\n"), m_prm.ass_type.c_str());
+    AddMessage(log_level, _T(" sidebarSize:  %d\n"), m_sidebarSize);
+    AddMessage(log_level, _T(" srt ornament: %s\n"), m_srt.ornament ? _T("yes") : _T("no"));
 }
 
 RGY_ERR Caption2Ass::proc(const uint8_t *data, const int64_t data_size, std::vector<AVPacket>& subList) {
@@ -874,7 +910,13 @@ std::vector<AVPacket> Caption2Ass::genCaption(int64_t PTS) {
                 AddMessage(RGY_LOG_DEBUG, _T("%d Caption skip\n"), captionList.size());
             } else {
                 int64_t endTime = (PTS + itcap->dwWaitTime * 90) - m_timestamp.startPCR;
-                vector_cat(subList, genAss(endTime));
+                std::vector<AVPacket> pkts;
+                switch (m_format) {
+                case FORMAT_ASS: pkts = genAss(endTime); break;
+                case FORMAT_SRT: pkts = genSrt(endTime); break;
+                default: break;
+                }
+                vector_cat(subList, pkts);
             }
             m_capList.clear();
             continue;
@@ -1246,3 +1288,111 @@ std::vector<AVPacket> Caption2Ass::genAss(int64_t endTime) {
     }
     return assLines;
 }
+
+std::vector<AVPacket> Caption2Ass::genSrt(int64_t endTime) {
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    rgy_time ts, te;
+    std::string str;
+    bool bNoSRT = true;
+    auto it = m_capList.begin();
+    for (int i = 0; it != m_capList.end(); it++, i++) {
+        (*it)->endTime = endTime;
+
+        if (i == 0) {
+            (*it)->endTime = endTime;
+            pkt.pts = (*it)->pts;
+            pkt.dts = (*it)->pts;
+            pkt.duration = (*it)->endTime - (*it)->startTime;
+
+            ts = rgy_time((uint32_t)((*it)->startTime / 90));
+            te = rgy_time((uint32_t)((*it)->endTime / 90));
+            //str += strsprintf("%d\r\n%02d:%02d:%02d,%03d --> %02d:%02d:%02d,%03d\r\n",
+            //    m_srt.index, ts.h, ts.m, ts.s, ts.ms, te.h, te.m, te.s, te.ms);
+        }
+
+        // ふりがな Skip
+        if ((*it)->outCharSizeMode == STR_SMALL)
+            continue;
+        bNoSRT = false;
+
+        auto it2 = (*it)->outStrings.begin();
+        bool italic = false, bold = false, underLine = false, charColor = false;
+        auto ornament_start = [&](vector<LINE_STR>::iterator& s) {
+            italic    = (s)->outItalic    != FALSE;
+            bold      = (s)->outBold      != FALSE;
+            underLine = (s)->outUnderLine != FALSE;
+            charColor = ((s)->outCharColor.r != 0xff
+                      || (s)->outCharColor.g != 0xff
+                      || (s)->outCharColor.b != 0xff);
+
+            if ((s)->outItalic)    str += "<i>";
+            if ((s)->outBold)      str += "<b>";
+            if ((s)->outUnderLine) str += "<u>";
+            if (charColor) {
+                str += strsprintf("<font color=\"#%02x%02x%02x\">",
+                    (s)->outCharColor.r, (s)->outCharColor.g, (s)->outCharColor.b);
+            }
+        };
+        auto ornament_end = [&]() {
+            if (italic)    str += "</i>";
+            if (bold)      str += "</b>";
+            if (underLine) str += "</u>";
+            if (charColor) str += "</font>";
+        };
+        if (m_srt.ornament) {
+            ornament_start(it2);
+        }
+
+        BOOL bHLC = FALSE;
+        // Output strings.
+        while (true) {
+            if (!bHLC && (it2->outHLC != 0)) {
+                str += strsprintf("[");
+                bHLC = TRUE;
+            }
+
+            str += it2->str;
+
+            ++it2;
+            if (it2 == (*it)->outStrings.end())
+                break;
+
+            if (bHLC && (it2->outHLC == 0)) {
+                str += "]";
+                bHLC = FALSE;
+            }
+
+            if (m_srt.ornament) {
+                ornament_end();
+                // Next ornament.
+                ornament_start(it2);
+            }
+        }
+        if (bHLC)
+            str += "]";
+        if (m_srt.ornament) {
+            ornament_end();
+        }
+        //str += "\r\n";
+    }
+
+    //if (m_capList.size() > 0) {
+    //    if (bNoSRT)
+    //        str += "\r\n";
+    //    str += "\r\n";
+    //    m_srt.index++;
+    //}
+    AddMessage(RGY_LOG_DEBUG, _T("pts: %11lld, dur: %6lld, %01d:%02d:%02d.%02d,%01d:%02d:%02d.%02d, %s\n"),
+        pkt.pts, pkt.duration,
+        ts.h, ts.m, ts.s, ts.ms / 10, te.h, te.m, te.s, te.ms / 10,
+        char_to_tstring(str, CP_UTF8).c_str());
+    uint8_t *ptr = (uint8_t *)av_strdup(str.c_str());
+    av_packet_from_data(&pkt, ptr, (int)str.length());
+
+    std::vector<AVPacket> assLines;
+    assLines.push_back(pkt);
+    return assLines;
+}
+
+#endif //#if ENABLE_AVSW_READER
