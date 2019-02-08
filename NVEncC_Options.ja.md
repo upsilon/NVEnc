@@ -105,6 +105,9 @@ NVEncCの認識している環境情報を表示
 ### --check-codecs, --check-decoders, --check-encoders
 利用可能な音声コーデック名を表示
 
+### --check-profiles &lt;string&gt;
+利用可能な音声プロファイル名を表示
+
 ### --check-formats
 利用可能な出力フォーマットを表示
 
@@ -291,10 +294,10 @@ VBRモード使用時の目標品質を設定する。(0.0-51.0, 0 = 自動)
 lookaheadを有効にし、その対象範囲をフレーム数で指定する。(0-32)
 画質の向上に役立つとともに、適応的なI,Bフレーム挿入が有効になる。
 
-### --no-i-apapt
+### --no-i-adapt
 lookahead有効時の適応的なIフレーム挿入を無効化する。
 
-### --no-b-apapt
+### --no-b-adapt
 lookahead有効時の適応的なBフレーム挿入を無効化する。
 
 ### --strict-gop
@@ -332,7 +335,7 @@ Bフレームの参照モードを指定する。
 ### --direct &lt;string&gt; [H.264のみ]
 H.264のBDirect modeを指定する。
 - auto(default)
-- none
+- disabled
 - spatial
 - temporal
 
@@ -345,6 +348,9 @@ H.264のadaptive transform modeを有効(無効)にする。
 - Q-pel    ... 1/4画素精度 (高精度)
 - half-pel ... 1/2画素精度
 - full-pel ... 1 画素精度 (低精度)
+
+### --slices &lt;int&gt;
+スライス数。指定なし、あるいは0で自動。
 
 ### --level &lt;string&gt;
 エンコードするコーデックのLevelを指定する。指定しない場合は自動的に決定される。
@@ -410,6 +416,12 @@ Mastering display data の設定。
 Example: --master-display G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
 ```
 
+### --aud
+Access Unit Delimiter NALを挿入する。
+
+### --pic-struct
+picture timing SEIを挿入する。
+
 各種フラグの設定。
 
 ### --cabac [H.264のみ]
@@ -441,6 +453,11 @@ libavが読み込み時に解析するファイルの時間を秒で指定。デ
 
 ### --trim &lt;int&gt;:&lt;int&gt;[,&lt;int&gt;:&lt;int&gt;][,&lt;int&gt;:&lt;int&gt;]...
 指定した範囲のフレームのみをエンコードする。
+
+```
+例1: --trim 0:1000,2000:3000    (0～1000フレーム目, 2000～3000フレーム目をエンコード)
+例2: --trim 2000:0              (2000～最終フレームまでをエンコード)
+```
 
 ### --seek [&lt;int&gt;:][&lt;int&gt;:]&lt;int&gt;[.&lt;int&gt;]
 書式は、hh:mm:ss.ms。"hh"や"mm"は省略可。
@@ -611,8 +628,40 @@ hexagonal  = FL + FR + FC + BL + BR + BC
 指定したチャプターファイルを読み込み反映させる。
 nero形式とapple形式に対応する。--chapter-copyとは併用できない。
 
+nero形式
+```
+CHAPTER01=00:00:39.706
+CHAPTER01NAME=chapter-1
+CHAPTER02=00:01:09.703
+CHAPTER02NAME=chapter-2
+CHAPTER03=00:01:28.288
+CHAPTER03NAME=chapter-3
+```
+
+apple形式 (should be in utf-8)
+```
+<?xml version="1.0" encoding="UTF-8" ?>
+  <TextStream version="1.1">
+   <TextStreamHeader>
+    <TextSampleDescription>
+    </TextSampleDescription>
+  </TextStreamHeader>
+  <TextSample sampleTime="00:00:39.706">chapter-1</TextSample>
+  <TextSample sampleTime="00:01:09.703">chapter-2</TextSample>
+  <TextSample sampleTime="00:01:28.288">chapter-3</TextSample>
+  <TextSample sampleTime="00:01:28.289" text="" />
+</TextStream>
+```
+
 ### --chapter-copy
 チャプターをコピーする。
+
+### --key-on-chapter
+キーフレーム位置にチャプターを挿入する。
+
+### --keyfile &lt;string&gt;
+キーフレームしたいフレーム番号を記載したファイルを読み込み、指定のフレームをキーフレームに設定する。
+フレーム番号は、先頭から0, 1, 2, .... として、複数指定する場合は都度改行する。
 
 ### --sub-copy [&lt;int&gt;[,&lt;int&gt;]...]
 字幕をコピーする。avhw/avswリーダー使用時のみ有効。
@@ -624,6 +673,15 @@ nero形式とapple形式に対応する。--chapter-copyとは併用できない
 例: 字幕トラック #1と#2をコピー
 --sub-copy 1,2
 ```
+
+### --caption2ass [&lt;string&gt;]
+caption2assによる字幕抽出処理を行い、動画にmuxして出力する。別途 "Caption.dll" が必要。
+
+mp4にmuxする際は、必ずsrt形式を選択してください。内部でさらにmov_textに変換してmuxしますが、ass形式を選択するとmp4へのmuxがうまく動作しません。
+
+**出力フォーマット**
+- srt (デフォルト)
+- ass
 
 ### -m, --mux-option &lt;string1&gt;:&lt;string2&gt;
 mux時にオプションパラメータを渡す。&lt;string1&gt;にオプション名、&lt;string2&gt;にオプションの値を指定する。
@@ -807,9 +865,6 @@ log=0
 | nn            | 最近傍点選択 | ○ |
 | npp_linear    | nppの線形補間 | ○ |
 | cubic         | 4x4 3次補間 | ○ |
-| cubic_bspline | 4x4 3次補間 (B=1, C=0)       | ○ |
-| cubic_catmull | 4x4 3次補間 (B=0, C=1/2)      | ○ |
-| cubic_b05c03  | 4x4 3次補間 (B=1/2, C=3/10)   | ○ |
 | super         | nppのsuper sampling(詳細不明) | ○ |
 | lanczos       | Lanczos法                    | ○ |
 

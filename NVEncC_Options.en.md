@@ -88,6 +88,9 @@ Show environment information recognized by NVEncC
 ### --check-codecs, --check-decoders, --check-encoders
 Show available audio codec names
 
+### --check-profiles &lt;string&gt;
+Show profile names available for specified codec
+
 ### --check-formats
 Show available output format
 
@@ -285,10 +288,10 @@ Set target quality when using VBR mode. (0.0-51.0, 0 = automatic)
 Enable lookahead, and specify its target range by the number of frames. (0 - 32)  
 This is useful to improve image quality, allowing adaptive insertion of I and B frames.
 
-### --no-i-apapt
+### --no-i-adapt
 Disable adaptive I frame insertion when lookahead is enabled.
 
-### --no-b-apapt
+### --no-b-adapt
 Disable adaptive B frame insertion when lookahead is enabled.
 
 ### --strict-gop
@@ -326,7 +329,7 @@ Specify B frame reference mode.
 ### --direct &lt;string&gt; [H.264 only]
 Specify H.264 B Direct mode.
 - auto (default)
-- none
+- disabled
 - spatial
 - temporal
 
@@ -339,6 +342,9 @@ Motion vector accuracy / default: auto
 - Q-pel ... 1/4 pixel accuracy (high precision)
 - half-pel ... 1/2 pixel precision
 - full-pel ... 1 pixel accuracy (low accuracy)
+
+### --slices &lt;int&gt;
+Set number of slices.
 
 ### --level &lt;string&gt;
 Specify the Level of the codec to be encoded. If not specified, it will be automatically set.
@@ -404,6 +410,12 @@ Set Mastering display data.
 Example: --master-display G(13250,34500)B(7500,3000)R(34000,16000)WP(15635,16450)L(10000000,1)
 ```
 
+### --aud
+Insert Access Unit Delimiter NAL.
+
+### --pic-struct
+Insert picture timing SEI.
+
 ### --cabac [H.264 only]
 Use CABAC. (Default: on)
 
@@ -432,6 +444,11 @@ If audio / subtitle tracks etc. are not detected properly, try increasing this v
 
 ### --trim &lt;int&gt;:&lt;int&gt;[,&lt;int&gt;:&lt;int&gt;][,&lt;int&gt;:&lt;int&gt;]...
 Encode only frames in the specified range.
+
+```
+Example 1: --trim 0:1000,2000:3000    (encode from frame #0 to #1000 and from frame #2000 to #3000)
+Example 2: --trim 2000:0              (encode from frame #2000 to the end)
+```
 
 ### --seek [&lt;int&gt;:][&lt;int&gt;:]&lt;int&gt;[.&lt;int&gt;]
 The format is hh:mm:ss.ms. "hh" or "mm" could be omitted. The transcode will start from the time specified.
@@ -607,8 +624,41 @@ Mux an external audio file specified.
 Set chapter in the (separate) chapter file.
 The chapter file could be either in nero format or apple format. Cannot be used with --chapter-copy.
 
+nero format
+```
+CHAPTER01=00:00:39.706
+CHAPTER01NAME=chapter-1
+CHAPTER02=00:01:09.703
+CHAPTER02NAME=chapter-2
+CHAPTER03=00:01:28.288
+CHAPTER03NAME=chapter-3
+```
+
+apple format (should be in utf-8)
+```
+<?xml version="1.0" encoding="UTF-8" ?>
+  <TextStream version="1.1">
+   <TextStreamHeader>
+    <TextSampleDescription>
+    </TextSampleDescription>
+  </TextStreamHeader>
+  <TextSample sampleTime="00:00:39.706">chapter-1</TextSample>
+  <TextSample sampleTime="00:01:09.703">chapter-2</TextSample>
+  <TextSample sampleTime="00:01:28.288">chapter-3</TextSample>
+  <TextSample sampleTime="00:01:28.289" text="" />
+</TextStream>
+```
+
+
 ### --chapter-copy
 Copy chapters from input file.
+
+### --key-on-chapter
+Set keyframes on chapter position.
+
+### --keyfile &lt;string&gt;
+Set keyframes on frames (starting from 0, 1, 2, ...) specified in the file.
+There should be one frame ID per line.
 
 ### --sub-copy [&lt;int&gt;[,&lt;int&gt;]...]
 Copy subtitle tracks from input file. Available only when avhw / avsw reader is used.
@@ -620,6 +670,13 @@ Supported subtitles are PGS / srt / txt / ttxt.
 Example: Copy subtitle track #1 and #2
 --sub-copy 1,2
 ```
+
+### --caption2ass [&lt;string&gt;]
+Enable internal caption2ass process. This feature requires Caption.dll.  
+
+**Note:** Pelase always select srt format when muxing to mp4.  
+
+supported formats ... srt (default), ass
 
 ### -m, --mux-option &lt;string1&gt;:&lt;string2&gt;
 Pass optional parameters to muxer. Specify the option name in &lt;string1&gt, and the option value in &lt;string2&gt;.
@@ -760,9 +817,6 @@ Those with "○" in nppi64_80.dll use the [NPP library](https://developer.nvidia
 | nn            | nearest neighbor | ○ |
 | npp_linear    | linear interpolation by NPP library | ○ |
 | cubic         | 4x4 cubic interpolation | ○ |
-| cubic_bspline | 4x4 cubic interpolation (B=1, C=0)       | ○ |
-| cubic_catmull | 4x4 cubic interpolation (B=0, C=1/2)      | ○ |
-| cubic_b05c03  | 4x4 cubic interpolation (B=1/2, C=3/10)   | ○ |
 | super         | So called "super sampling" by NPP library | ○ |
 | lanczos       | Lanczos interpolation                    | ○ |
 

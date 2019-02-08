@@ -2,6 +2,8 @@
 # NVEnc  
 by rigaya  
 
+[![Build status](https://ci.appveyor.com/api/projects/status/dmlkxw4rbrby0oi9/branch/master?svg=true)](https://ci.appveyor.com/project/rigaya/nvenc/branch/master)  
+
 このソフトウェアは、NVIDIAのGPU/APUに搭載されているHWエンコーダ(NVENC)の画質や速度といった性能の実験を目的としています。[Aviutl](http://spring-fragrance.mints.ne.jp/aviutl/)の出力プラグイン版と単体で動作するコマンドライン版があります。  
 
 - NVEnc.auo … NVIDIAのNVEncを使用してエンコードを行う[Aviutl](http://spring-fragrance.mints.ne.jp/aviutl/)の出力プラグインです。  
@@ -112,7 +114,9 @@ NVEncによる出力は、max_dec_frame_buffering フィールドを含まない
   [ffmpeg](https://ffmpeg.org/),
   [tinyxml2](http://www.grinninglizard.com/tinyxml2/),
   [dtl](https://github.com/cubicdaiya/dtl),
-  [ttmath](http://www.ttmath.org/)を使用しています。  
+  [ttmath](http://www.ttmath.org/),
+  [dtl](https://github.com/cubicdaiya/dtl),
+  [Caption2Ass](https://github.com/maki-rxrz/Caption2Ass_PCR)を使用しています。  
   これらのライセンスにつきましては、該当ソースのヘッダ部分や、NVEnc_license.txtをご覧ください。
 
 - ビルド方法については[こちら](./Build.ja.md)

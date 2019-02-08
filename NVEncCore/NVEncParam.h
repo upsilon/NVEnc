@@ -30,6 +30,7 @@
 #include <tchar.h>
 #include <limits.h>
 #include <vector>
+#include "rgy_osdep.h"
 #pragma warning (push)
 #pragma warning (disable: 4819)
 #pragma warning (disable: 4201)
@@ -39,6 +40,7 @@
 #include "nvEncodeAPI.h"
 #include "NVEncoderPerf.h"
 #include "rgy_util.h"
+#include "rgy_caption.h"
 #include "convert_csp.h"
 
 using std::vector;
@@ -193,7 +195,7 @@ const CX_DESC list_nvenc_codecs_for_opt[] = {
     { NULL, NULL }
 };
 
-const CX_DESC list_avc_level[] = { 
+const CX_DESC list_avc_level[] = {
     { _T("auto"), 0   },
     { _T("1"),    10  },
     { _T("1b"),   9   },
@@ -215,7 +217,7 @@ const CX_DESC list_avc_level[] = {
     { NULL, NULL }
 };
 
-const CX_DESC list_hevc_level[] = { 
+const CX_DESC list_hevc_level[] = {
     { _T("auto"), 0   },
     { _T("1"),    NV_ENC_LEVEL_HEVC_1   },
     { _T("2"),    NV_ENC_LEVEL_HEVC_2   },
@@ -233,7 +235,7 @@ const CX_DESC list_hevc_level[] = {
     { NULL, NULL }
 };
 
-const CX_DESC list_hevc_cu_size[] = { 
+const CX_DESC list_hevc_cu_size[] = {
     { _T("auto"), NV_ENC_HEVC_CUSIZE_AUTOSELECT },
     { _T("8"),    NV_ENC_HEVC_CUSIZE_8x8        },
     { _T("16"),   NV_ENC_HEVC_CUSIZE_16x16      },
@@ -300,7 +302,7 @@ const CX_DESC list_videoformat[] = {
     { _T("pal"),       1  },
     { _T("secam"),     3  },
     { _T("mac"),       4  },
-    { NULL, NULL } 
+    { NULL, NULL }
 };
 const CX_DESC list_chromaloc[] = {
     { _T("0"), 0 },
@@ -439,7 +441,7 @@ enum {
 
 const CX_DESC list_nppi_resize[] = {
     { _T("default"),       NPPI_INTER_UNDEFINED },
-#ifndef _M_IX86
+#if !defined(_M_IX86) || FOR_AUO
     { _T("nn"),            NPPI_INTER_NN },
     { _T("npp_linear"),    NPPI_INTER_LINEAR },
     { _T("cubic"),         NPPI_INTER_CUBIC },
@@ -449,6 +451,22 @@ const CX_DESC list_nppi_resize[] = {
     { _T("super"),         NPPI_INTER_SUPER },
     { _T("lanczos"),       NPPI_INTER_LANCZOS },
 #endif
+    //{ _T("lanczons3"),     NPPI_INTER_LANCZOS3_ADVANCED },
+    { _T("bilinear"),      RESIZE_CUDA_TEXTURE_BILINEAR },
+    { _T("spline36"),      RESIZE_CUDA_SPLINE36 },
+    { NULL, NULL }
+};
+
+const CX_DESC list_nppi_resize_help[] = {
+    { _T("default"),       NPPI_INTER_UNDEFINED },
+    { _T("nn"),            NPPI_INTER_NN },
+    { _T("npp_linear"),    NPPI_INTER_LINEAR },
+    { _T("cubic"),         NPPI_INTER_CUBIC },
+    //{ _T("cubic_bspline"), NPPI_INTER_CUBIC2P_BSPLINE },
+    //{ _T("cubic_catmull"), NPPI_INTER_CUBIC2P_CATMULLROM },
+    //{ _T("cubic_b05c03"),  NPPI_INTER_CUBIC2P_B05C03 },
+    { _T("super"),         NPPI_INTER_SUPER },
+    { _T("lanczos"),       NPPI_INTER_LANCZOS },
     //{ _T("lanczons3"),     NPPI_INTER_LANCZOS3_ADVANCED },
     { _T("bilinear"),      RESIZE_CUDA_TEXTURE_BILINEAR },
     { _T("spline36"),      RESIZE_CUDA_SPLINE36 },
@@ -817,12 +835,15 @@ struct InEncodeVideoParam {
     int nTrimCount;
     sTrim *pTrimList;
     bool bCopyChapter;
+    bool keyOnChapter;
+    C2AFormat caption2ass;
     int nOutputThread;
     int nAudioThread;
     int nInputThread;
     int nAudioIgnoreDecodeError;
     muxOptList *pMuxOpt;
     tstring sChapterFile;
+    tstring keyFile;
     TCHAR *pMuxVidTsLogFile;
     TCHAR *pAVInputFormat;
     RGYAVSync nAVSyncMode;     //avsyncの方法 (NV_AVSYNC_xxx)

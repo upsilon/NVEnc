@@ -4,6 +4,8 @@ by rigaya
 
 **[日本語版はこちら＞＞](./Readme.ja.md)**
 
+[![Build status](https://ci.appveyor.com/api/projects/status/dmlkxw4rbrby0oi9/branch/master?svg=true)](https://ci.appveyor.com/project/rigaya/nvenc/branch/master)  
+
 This software is meant to investigate performance and image quality of HW encoder (NVENC) of NVIDIA.
 There are 2 types of software developed, one is command line version that runs independently, and the nother is a output plug-in of [Aviutl](http://spring-fragrance.mints.ne.jp/aviutl/).
 
@@ -110,8 +112,9 @@ which might cause problem in some playback environments.
 - This software depends on
   [ffmpeg](https://ffmpeg.org/),
   [tinyxml2](http://www.grinninglizard.com/tinyxml2/),
-  [dtl](https://github.com/cubicdaiya/dtl) & 
-  [ttmath](http://www.ttmath.org/).
+  [dtl](https://github.com/cubicdaiya/dtl),
+  [ttmath](http://www.ttmath.org/) &
+  [Caption2Ass](https://github.com/maki-rxrz/Caption2Ass_PCR).
   For these licenses, please see the header part of the corresponding source and NVEnc_license.txt.
 
 - [How to build](./Build.en.md)
